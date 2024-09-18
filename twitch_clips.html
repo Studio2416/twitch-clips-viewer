@@ -77,89 +77,87 @@
 
         // 新しいクリップ取得のための関数
         async function fetchClips() {
-    try {
-        const dateRange = await getClipDateRange();
-        if (!dateRange) {
-            console.error('Failed to get clip date range.');
-            return [];
-        }
-
-        const { latestDate, oldestDate } = dateRange;
-        console.log('Latest date:', latestDate);
-        console.log('Oldest date:', oldestDate);
-
-        const randomDates = getRandomDatesWithinRange(oldestDate, latestDate, 5); // ランダム日付の数を3から5に増やす
-        console.log('Random dates for fetching clips:', randomDates);
-
-        let allClips = [];
-        let clipIds = new Set(); // 取得したクリップのIDを追跡するSet
-
-        // ランダムな日付から、それぞれの範囲を遡ってクリップを取得
-        for (const randomDate of randomDates) {
-            let dateClips = [];
-            let cursor = null; // ページネーション用のカーソル
-            let attempts = 0; // 取得の試行回数を追加
-
-            // ページネーションでクリップを取得
-            while (dateClips.length < 10 && attempts < 5) { // 最大5回の試行
-                // ページネーションのためのクエリパラメータを追加
-                const url = `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=10&started_at=${randomDate}` + (cursor ? `&after=${cursor}` : '');
-                
-                console.log('Fetching clips with URL:', url);
-
-                const response = await fetch(url, {
-                    headers: {
-                        'Client-ID': clientId,
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                });
-                const data = await response.json();
-
-                console.log('Fetched data:', data);
-
-                // 重複を避けてクリップを追加
-                let newClipsAdded = false;
-                for (const clip of data.data) {
-                    if (!clipIds.has(clip.id)) { // まだ追加されていない場合のみ追加
-                        dateClips.push(clip);
-                        clipIds.add(clip.id); // 追加したクリップのIDを記録
-                        newClipsAdded = true;
-
-                        // 各日付で最大10個に達したらループを抜ける
-                        if (dateClips.length >= 10) break;
-                    }
+            try {
+                const dateRange = await getClipDateRange();
+                if (!dateRange) {
+                    console.error('Failed to get clip date range.');
+                    return [];
                 }
 
-                // ページネーションがある場合、次のページへ
-                if (data.pagination && data.pagination.cursor) {
-                    cursor = data.pagination.cursor;
-                } else {
-                    console.log('No more pages or clips available.');
-                    break;
+                const { latestDate, oldestDate } = dateRange;
+                console.log('Latest date:', latestDate);
+                console.log('Oldest date:', oldestDate);
+
+                const randomDates = getRandomDatesWithinRange(oldestDate, latestDate, 5); // ランダム日付の数を3から5に増やす
+                console.log('Random dates for fetching clips:', randomDates);
+
+                let allClips = [];
+                let clipIds = new Set(); // 取得したクリップのIDを追跡するSet
+
+                // ランダムな日付から、それぞれの範囲を遡ってクリップを取得
+                for (const randomDate of randomDates) {
+                    let dateClips = [];
+                    let cursor = null; // ページネーション用のカーソル
+                    let attempts = 0; // 取得の試行回数を追加
+
+                    // ページネーションでクリップを取得
+                    while (dateClips.length < 10 && attempts < 5) { // 最大5回の試行
+                        // ページネーションのためのクエリパラメータを追加
+                        const url = `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=10&started_at=${randomDate}` + (cursor ? `&after=${cursor}` : '');
+                        
+                        console.log('Fetching clips with URL:', url);
+
+                        const response = await fetch(url, {
+                            headers: {
+                                'Client-ID': clientId,
+                                'Authorization': `Bearer ${accessToken}`
+                            }
+                        });
+                        const data = await response.json();
+
+                        console.log('Fetched data:', data);
+
+                        // 重複を避けてクリップを追加
+                        let newClipsAdded = false;
+                        for (const clip of data.data) {
+                            if (!clipIds.has(clip.id)) { // まだ追加されていない場合のみ追加
+                                dateClips.push(clip);
+                                clipIds.add(clip.id); // 追加したクリップのIDを記録
+                                newClipsAdded = true;
+
+                                // 各日付で最大10個に達したらループを抜ける
+                                if (dateClips.length >= 10) break;
+                            }
+                        }
+
+                        // ページネーションがある場合、次のページへ
+                        if (data.pagination && data.pagination.cursor) {
+                            cursor = data.pagination.cursor;
+                        } else {
+                            console.log('No more pages or clips available.');
+                            break;
+                        }
+
+                        // 次のページに移動し、再試行
+                        attempts++; // 試行回数を増加
+                    }
+
+                    // 各日付のクリップを全クリップに追加
+                    allClips = allClips.concat(dateClips);
+
+                    // 合計30個に達したら終了
+                    if (allClips.length >= 30) break;
                 }
 
-                // 次のページに移動し、再試行
-                attempts++; // 試行回数を増加
+                // 合計30個のクリップからランダムに再生
+                allClips = shuffleArray(allClips); // ランダム化
+                console.log('Fetched random date clips without duplicates:', allClips);
+                return allClips;
+            } catch (error) {
+                console.error('Error fetching clips:', error);
+                return [];
             }
-
-            // 各日付のクリップを全クリップに追加
-            allClips = allClips.concat(dateClips);
-
-            // 合計30個に達したら終了
-            if (allClips.length >= 30) break;
         }
-
-        // 合計30個のクリップからランダムに再生
-        allClips = shuffleArray(allClips); // ランダム化
-        console.log('Fetched random date clips without duplicates:', allClips);
-        return allClips;
-    } catch (error) {
-        console.error('Error fetching clips:', error);
-        return [];
-    }
-}
-
-
 
         // 配列をシャッフルする関数
         function shuffleArray(array) {
@@ -172,32 +170,31 @@
 
         // getClipDateRange 関数
         async function getClipDateRange() {
-    try {
-        // 最古の日付を仮に設定
-        const fixedOldestDate = '2023-08-08T00:00:00Z'; // 昨年の開始日を仮に設定
+            try {
+                // 最古の日付を仮に設定
+                const fixedOldestDate = '2023-08-08T00:00:00Z'; // 昨年の開始日を仮に設定
 
-        // 最新のクリップ取得
-        const latestResponse = await fetch(`https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=1`, {
-            headers: {
-                'Client-ID': clientId,
-                'Authorization': `Bearer ${accessToken}`
+                // 最新のクリップ取得
+                const latestResponse = await fetch(`https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=1`, {
+                    headers: {
+                        'Client-ID': clientId,
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                const latestData = await latestResponse.json();
+                if (latestData.data.length === 0) {
+                    console.error('No clips found for the broadcaster.');
+                    return null;
+                }
+
+                const latestDate = latestData.data[0].created_at;
+
+                return { latestDate, oldestDate: fixedOldestDate };
+            } catch (error) {
+                console.error('Error fetching clip date range:', error);
+                return null;
             }
-        });
-        const latestData = await latestResponse.json();
-        if (latestData.data.length === 0) {
-            console.error('No clips found for the broadcaster.');
-            return null;
         }
-
-        const latestDate = latestData.data[0].created_at;
-
-        return { latestDate, oldestDate: fixedOldestDate };
-    } catch (error) {
-        console.error('Error fetching clip date range:', error);
-        return null;
-    }
-}
-
 
         // ランダムな日付を指定された範囲内で生成する
         function getRandomDatesWithinRange(startDate, endDate, count = 3) {
@@ -218,6 +215,35 @@
             return thumbnailUrl.replace('-preview-480x272.jpg', '.mp4');
         }
 
+        async function playClips() {
+            let currentClipIndex = 0;
+
+            async function playNextClip() {
+                // すべてのクリップが再生され尽くした場合
+                if (currentClipIndex >= clips.length) {
+                    console.log('All clips have been played. Fetching new clips...');
+                    clips = await fetchClips(); // 新しいクリップを取得
+                    currentClipIndex = 0; // インデックスをリセット
+
+                    if (clips.length === 0) {
+                        console.error('No new clips found.');
+                        return; // 取得したクリップがない場合は終了
+                    }
+                }
+
+                // 次のクリップを再生
+                displayClip(currentClipIndex);
+                const videoPlayer = document.getElementById('video-player');
+                videoPlayer.play();
+                videoPlayer.onended = () => {
+                    currentClipIndex++;
+                    playNextClip();
+                };
+            }
+
+            playNextClip();
+        }
+
         function displayClip(index) {
             const clip = clips[index];
             console.log('Displaying clip:', clip);
@@ -232,12 +258,6 @@
             const videoPlayer = document.getElementById('video-player');
             videoPlayer.src = videoUrl;
             videoPlayer.play();
-
-            // 次のクリップに自動で移動
-            videoPlayer.onended = () => {
-                const randomIndex = Math.floor(Math.random() * clips.length);
-                displayClip(randomIndex);
-            };
         }
 
         async function init() {
@@ -246,7 +266,7 @@
             clips = await fetchClips();
             console.log('Clips array:', clips);
             if (clips.length > 0) {
-                displayClip(0); // ランダムに最初のクリップを表示
+                playClips(); // 初回再生を開始
             } else {
                 console.error('No clips found for the broadcaster.');
             }
