@@ -83,26 +83,26 @@
         }
 
         function displayClip(index) {
-            const clip = clips[index];
-            console.log('Displaying clip:', clip);
-            if (!clip) {
-                console.error('No clip found at index:', index);
-                return;
-            }
-            document.getElementById('clip-title').innerText = clip.title;
-            document.getElementById('clip-creator').innerText = `Created by: ${clip.creator_name}`;
-            document.getElementById('clip-container').innerHTML = `
-            <iframe 
-                src="https://clips.twitch.tv/embed?clip=${clip.id}&parent=Studio2416.github.io" 
-                frameborder="0" 
-                allowfullscreen="true" 
-                scrolling="no" 
-                height="400" 
-                width="600">
-            </iframe>
+    const clip = clips[index];
+    console.log('Displaying clip:', clip);
+    if (!clip) {
+        console.error('No clip found at index:', index);
+        return;
+    }
+    document.getElementById('clip-title').innerText = clip.title;
+    document.getElementById('clip-creator').innerText = `Created by: ${clip.creator_name}`;
+    document.getElementById('clip-container').innerHTML = `
+        <iframe 
+            src="https://clips.twitch.tv/embed?clip=${clip.id}&parent=Studio2416.github.io&autoplay=true" 
+            frameborder="0" 
+            allowfullscreen="true" 
+            scrolling="no" 
+            height="400" 
+            width="600">
+        </iframe>
+    `;
+}
 
-            `;
-        }
 
         async function init() {
             await fetchAccessToken();
