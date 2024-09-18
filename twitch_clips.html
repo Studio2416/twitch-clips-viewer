@@ -88,19 +88,20 @@
         console.log('Latest date:', latestDate);
         console.log('Oldest date:', oldestDate);
 
-        const randomDates = getRandomDatesWithinRange(oldestDate, latestDate, 3);
+        const randomDates = getRandomDatesWithinRange(oldestDate, latestDate, 5); // ランダム日付の数を3から5に増やす
         console.log('Random dates for fetching clips:', randomDates);
 
         let allClips = [];
         let clipIds = new Set(); // 取得したクリップのIDを追跡するSet
 
-        // ランダムな3つの日付から、それぞれの範囲を遡ってクリップを取得
+        // ランダムな日付から、それぞれの範囲を遡ってクリップを取得
         for (const randomDate of randomDates) {
             let dateClips = [];
             let cursor = null; // ページネーション用のカーソル
+            let attempts = 0; // 取得の試行回数を追加
 
-            // ページネーションで10個のクリップを取得
-            while (dateClips.length < 10) {
+            // ページネーションでクリップを取得
+            while (dateClips.length < 10 && attempts < 5) { // 最大5回の試行
                 // ページネーションのためのクエリパラメータを追加
                 const url = `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=10&started_at=${randomDate}` + (cursor ? `&after=${cursor}` : '');
                 
@@ -137,12 +138,8 @@
                     break;
                 }
 
-                // クリップが取得できない場合でも次のページを試みる
-                if (!newClipsAdded && cursor) {
-                    continue;
-                } else if (!newClipsAdded && !cursor) {
-                    break; // 次のページが存在しない場合はループを終了
-                }
+                // 次のページに移動し、再試行
+                attempts++; // 試行回数を増加
             }
 
             // 各日付のクリップを全クリップに追加
@@ -161,6 +158,7 @@
         return [];
     }
 }
+
 
 
         // 配列をシャッフルする関数
