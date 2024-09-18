@@ -129,17 +129,20 @@
                     }
                 }
 
-                // クリップが10個未満の場合、次のページへ
+                // ページネーションがある場合、次のページへ
                 if (data.pagination && data.pagination.cursor) {
                     cursor = data.pagination.cursor;
                 } else {
-                    // ページネーションが終了した場合
                     console.log('No more pages or clips available.');
                     break;
                 }
 
-                // 新しいクリップがなければループを抜ける
-                if (!newClipsAdded) break;
+                // クリップが取得できない場合でも次のページを試みる
+                if (!newClipsAdded && cursor) {
+                    continue;
+                } else if (!newClipsAdded && !cursor) {
+                    break; // 次のページが存在しない場合はループを終了
+                }
             }
 
             // 各日付のクリップを全クリップに追加
@@ -158,6 +161,7 @@
         return [];
     }
 }
+
 
         // 配列をシャッフルする関数
         function shuffleArray(array) {
