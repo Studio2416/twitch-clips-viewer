@@ -28,8 +28,6 @@
             height: 400px; /* 全体の高さ */
         }
     </style>
-    
-    
 </head>
 <body>
     <div id="clip-title"></div>
@@ -98,41 +96,33 @@
         }
 
         function displayClip(index) {
-    const clip = clips[index];
-    console.log('Displaying clip:', clip);
-    if (!clip) {
-        console.error('No clip found at index:', index);
-        return;
-    }
-    document.getElementById('clip-title').innerText = clip.title;
-    document.getElementById('clip-creator').innerText = `Created by: ${clip.creator_name}`;
-    document.getElementById('clip-container').innerHTML = `
-        <iframe 
-            src="https://clips.twitch.tv/embed?clip=${clip.id}&parent=Studio2416.github.io&autoplay=true" 
-            frameborder="0" 
-            allowfullscreen="true" 
-            scrolling="no" 
-            style="position: absolute; top: -20px; left: 0; width: 600px; height: 400px;">
-        </iframe>
-    `;
+            const clip = clips[index];
+            console.log('Displaying clip:', clip);
+            if (!clip) {
+                console.error('No clip found at index:', index);
+                return;
+            }
+            document.getElementById('clip-title').innerText = clip.title;
+            document.getElementById('clip-creator').innerText = `Created by: ${clip.creator_name}`;
+            document.getElementById('clip-container').innerHTML = `
+                <iframe 
+                    src="https://clips.twitch.tv/embed?clip=${clip.id}&parent=Studio2416.github.io&autoplay=true" 
+                    frameborder="0" 
+                    allowfullscreen="true" 
+                    scrolling="no" 
+                    style="position: absolute; top: -20px; left: 0; width: 600px; height: 400px;"
+                    id="clip-frame"> <!-- ここにIDを追加 -->
+                </iframe>
+            `;
 
-    // 自動で次のクリップに進むためのタイマー（既存のコード）
-    let checkEndInterval = setInterval(() => {
-        const iframe = document.getElementById('clip-frame');
-        if (iframe) {
+            // 自動で次のクリップに進むためのタイマー
             const clipDuration = clip.duration * 1000; // クリップの長さ（ミリ秒）
             setTimeout(() => {
                 // 次のクリップに移動
                 currentClipIndex = getRandomClipIndex();
                 displayClip(currentClipIndex);
             }, clipDuration + 1000); // 1秒後に次のクリップへ
-            clearInterval(checkEndInterval);
         }
-    }, 1000);
-}
-
-
-
 
         async function init() {
             await fetchAccessToken();
