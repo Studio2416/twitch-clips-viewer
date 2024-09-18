@@ -14,7 +14,23 @@
         #clip-title, #clip-creator {
             margin: 20px 0;
         }
+        #clip-container {
+            position: relative;
+            width: 600px;
+            height: 400px;
+        }
+        /* クリップの上に透明なレイヤーを配置 */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 1;
+        }
     </style>
+    
 </head>
 <body>
     <div id="clip-title"></div>
@@ -98,10 +114,26 @@
             allowfullscreen="true" 
             scrolling="no" 
             height="400" 
-            width="600">
+            width="600"
+            id="clip-frame">
         </iframe>
     `;
+
+    // 自動で次のクリップに進むためのタイマー
+    let checkEndInterval = setInterval(() => {
+        const iframe = document.getElementById('clip-frame');
+        if (iframe) {
+            const clipDuration = clip.duration * 1000; // クリップの長さ（ミリ秒）
+            setTimeout(() => {
+                // 次のクリップに移動
+                currentClipIndex = getRandomClipIndex();
+                displayClip(currentClipIndex);
+            }, clipDuration + 1000); // 1秒後に次のクリップへ
+            clearInterval(checkEndInterval);
+        }
+    }, 1000);
 }
+
 
 
         async function init() {
