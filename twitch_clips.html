@@ -16,20 +16,19 @@
         }
         #clip-container {
             position: relative;
-            width: 600px;
-            height: 400px;
+            overflow: hidden; /* オーバーフローを隠す */
+            width: 600px; /* 表示する幅 */
+            height: 338px; /* 表示する高さ */
         }
-        /* クリップの上に透明なレイヤーを配置 */
-        .overlay {
+        iframe {
             position: absolute;
-            top: 0;
+            top: -40px; /* プレイヤーの上部を隠す */
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            z-index: 1;
+            width: 600px;
+            height: 400px; /* 全体の高さ */
         }
     </style>
+    
     
 </head>
 <body>
@@ -113,13 +112,11 @@
             frameborder="0" 
             allowfullscreen="true" 
             scrolling="no" 
-            height="400" 
-            width="600"
-            id="clip-frame">
+            style="position: absolute; top: -40px; left: 0; width: 600px; height: 400px;">
         </iframe>
     `;
 
-    // 自動で次のクリップに進むためのタイマー
+    // 自動で次のクリップに進むためのタイマー（既存のコード）
     let checkEndInterval = setInterval(() => {
         const iframe = document.getElementById('clip-frame');
         if (iframe) {
@@ -133,6 +130,7 @@
         }
     }, 1000);
 }
+
 
 
 
