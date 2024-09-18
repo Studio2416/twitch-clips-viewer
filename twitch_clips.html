@@ -77,83 +77,87 @@
 
         // 新しいクリップ取得のための関数
         async function fetchClips() {
-            try {
-                const dateRange = await getClipDateRange();
-                if (!dateRange) {
-                    console.error('Failed to get clip date range.');
-                    return [];
-                }
-
-                const { latestDate, oldestDate } = dateRange;
-                console.log('Latest date:', latestDate);
-                console.log('Oldest date:', oldestDate);
-
-                const randomDates = getRandomDatesWithinRange(oldestDate, latestDate, 3);
-                console.log('Random dates for fetching clips:', randomDates);
-
-                let allClips = [];
-                let clipIds = new Set(); // 取得したクリップのIDを追跡するSet
-
-                // ランダムな3つの日付から、それぞれの範囲を遡ってクリップを取得
-                for (const randomDate of randomDates) {
-                    let dateClips = [];
-                    let cursor = null;
-                    let currentStartDate = new Date(randomDate);
-
-                    // 各日付から遡って最大10個のクリップを取得
-                    while (dateClips.length < 10) {
-                        // 現在の開始日（`started_at`）から10日遡る
-                        currentStartDate.setDate(currentStartDate.getDate() - 10);
-                        const url = `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=10&started_at=${currentStartDate.toISOString()}`;
-                        
-                        console.log('Fetching clips with URL:', url);
-
-                        const response = await fetch(url, {
-                            headers: {
-                                'Client-ID': clientId,
-                                'Authorization': `Bearer ${accessToken}`
-                            }
-                        });
-                        const data = await response.json();
-
-                        console.log('Fetched data:', data);
-
-                        // 重複を避けてクリップを追加
-                        let newClipsAdded = false;
-                        for (const clip of data.data) {
-                            if (!clipIds.has(clip.id)) { // まだ追加されていない場合のみ追加
-                                dateClips.push(clip);
-                                clipIds.add(clip.id); // 追加したクリップのIDを記録
-                                newClipsAdded = true;
-
-                                // 各日付で最大10個に達したらループを抜ける
-                                if (dateClips.length >= 10) break;
-                            }
-                        }
-
-                        // 全てのクリップが取得され、重複があった場合
-                        if (data.data.length === 0 || !newClipsAdded) {
-                            console.log('No new clips found or no more clips available.');
-                            break; // 新しいクリップがなくなったら抜ける
-                        }
-                    }
-
-                    // 各日付のクリップを全クリップに追加
-                    allClips = allClips.concat(dateClips);
-
-                    // 合計30個に達したら終了
-                    if (allClips.length >= 30) break;
-                }
-
-                // 合計30個のクリップからランダムに再生
-                allClips = shuffleArray(allClips); // ランダム化
-                console.log('Fetched random date clips without duplicates:', allClips);
-                return allClips;
-            } catch (error) {
-                console.error('Error fetching clips:', error);
-                return [];
-            }
+    try {
+        const dateRange = await getClipDateRange();
+        if (!dateRange) {
+            console.error('Failed to get clip date range.');
+            return [];
         }
+
+        const { latestDate, oldestDate } = dateRange;
+        console.log('Latest date:', latestDate);
+        console.log('Oldest date:', oldestDate);
+
+        const randomDates = getRandomDatesWithinRange(oldestDate, latestDate, 3);
+        console.log('Random dates for fetching clips:', randomDates);
+
+        let allClips = [];
+        let clipIds = new Set(); // 取得したクリップのIDを追跡するSet
+
+        // ランダムな3つの日付から、それぞれの範囲を遡ってクリップを取得
+        for (const randomDate of randomDates) {
+            let dateClips = [];
+            let cursor = null; // ページネーション用のカーソル
+
+            // ページネーションで10個のクリップを取得
+            while (dateClips.length < 10) {
+                // ページネーションのためのクエリパラメータを追加
+                const url = `https://api.twitch.tv/helix/clips?broadcaster_id=${broadcasterId}&first=10&started_at=${randomDate}` + (cursor ? `&after=${cursor}` : '');
+                
+                console.log('Fetching clips with URL:', url);
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Client-ID': clientId,
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+                const data = await response.json();
+
+                console.log('Fetched data:', data);
+
+                // 重複を避けてクリップを追加
+                let newClipsAdded = false;
+                for (const clip of data.data) {
+                    if (!clipIds.has(clip.id)) { // まだ追加されていない場合のみ追加
+                        dateClips.push(clip);
+                        clipIds.add(clip.id); // 追加したクリップのIDを記録
+                        newClipsAdded = true;
+
+                        // 各日付で最大10個に達したらループを抜ける
+                        if (dateClips.length >= 10) break;
+                    }
+                }
+
+                // クリップが10個未満の場合、次のページへ
+                if (data.pagination && data.pagination.cursor) {
+                    cursor = data.pagination.cursor;
+                } else {
+                    // ページネーションが終了した場合
+                    console.log('No more pages or clips available.');
+                    break;
+                }
+
+                // 新しいクリップがなければループを抜ける
+                if (!newClipsAdded) break;
+            }
+
+            // 各日付のクリップを全クリップに追加
+            allClips = allClips.concat(dateClips);
+
+            // 合計30個に達したら終了
+            if (allClips.length >= 30) break;
+        }
+
+        // 合計30個のクリップからランダムに再生
+        allClips = shuffleArray(allClips); // ランダム化
+        console.log('Fetched random date clips without duplicates:', allClips);
+        return allClips;
+    } catch (error) {
+        console.error('Error fetching clips:', error);
+        return [];
+    }
+}
 
         // 配列をシャッフルする関数
         function shuffleArray(array) {
