@@ -18,14 +18,14 @@
             position: relative;
             overflow: hidden; /* オーバーフローを隠す */
             width: 600px; /* 表示する幅 */
-            height: 338px; /* 表示する高さ */
+            height: 338px; /* アスペクト比16:9に近い高さ */
         }
         iframe {
             position: absolute;
-            top: -20px; /* プレイヤーの上部を隠す */
+            top: -30px; /* プレイヤーの上部を少し隠す */
             left: 0;
             width: 600px;
-            height: 400px; /* 全体の高さ */
+            height: 400px; /* 動画全体が表示されるような高さ */
         }
     </style>
 </head>
@@ -110,8 +110,8 @@
                     frameborder="0" 
                     allowfullscreen="true" 
                     scrolling="no" 
-                    style="position: absolute; top: -20px; left: 0; width: 600px; height: 400px;"
-                    id="clip-frame"> <!-- ここにIDを追加 -->
+                    style="position: absolute; top: -30px; left: 0; width: 600px; height: 400px;"
+                    id="clip-frame">
                 </iframe>
             `;
 
